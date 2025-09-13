@@ -1,0 +1,36 @@
+// Test script to verify the local Maven repository works with Gradle
+// Run with: gradle -b test-gradle-repo.gradle testRepo
+
+repositories {
+    maven {
+        name = 'LocalJavaSamlRepo'
+        url = uri('file:///Users/rasharab/chapter2/java-saml/.maven')
+    }
+    mavenCentral()
+}
+
+configurations {
+    testConfig
+}
+
+dependencies {
+    testConfig 'com.onelogin:java-saml:2.10.0-UNBLOCKED-SNAPSHOT'
+    testConfig 'com.onelogin:java-saml-core:2.10.0-UNBLOCKED-SNAPSHOT'
+}
+
+task testRepo {
+    doLast {
+        println "Testing local Maven repository resolution..."
+        
+        configurations.testConfig.resolvedConfiguration.resolvedArtifacts.each { artifact ->
+            println "✓ Resolved: ${artifact.moduleVersion.id} from ${artifact.file}"
+        }
+        
+        println "\nRepository URLs:"
+        repositories.each { repo ->
+            if (repo.hasProperty('url')) {
+                println "  - ${repo.name}: ${repo.url}"
+            }
+        }
+    }
+}

@@ -632,9 +632,9 @@ public class UtilsTest {
 	@Test
 	public void testGetNameIdDataWrongKey() throws Exception {
 		String keyString = Util.getFileAsString("data/misc/sp3.key");
-		
+
 		expectedEx.expect(Exception.class);
-		expectedEx.expectMessage("algid parse error, not a sequence");
+		expectedEx.expectMessage("Unable to decode key");
 		Util.loadPrivateKey(keyString);
 	}
 	

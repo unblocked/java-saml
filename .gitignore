@@ -7,3 +7,10 @@ target
 .project
 core/doc
 toolkit/doc
+
+# Local Maven repository
+.maven
+.dist
+dist
+
+.gradle/
