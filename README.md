@@ -4,6 +4,25 @@
 
 Add SAML support to your Java applications using this library.
 
+## ⚠️ Important Notice
+
+**DO NOT DELETE THIS REPOSITORY** - This repository contains critical framework adapters and build configurations that are actively maintained and used in production environments.
+
+## Recent Changes (2025)
+
+### Version 2.10.0-UNBLOCKED-SNAPSHOT
+- **🚀 Jakarta EE Migration**: Fully migrated from Java EE to Jakarta EE 10+ for modern compatibility
+- **☕ Java 24 Support**: Updated test dependencies (Mockito 5.14.2) for full Java 24 compatibility
+- **🌐 Jetty 12 Adapter**: New framework adapter for Eclipse Jetty 12 with Jakarta EE support
+  - HTTP abstraction layer for framework-agnostic SAML integration
+  - Compatible with modern web frameworks and Tor network support
+  - Factory pattern for creating HTTP contexts from various request/response objects
+- **🔧 Build System Improvements**:
+  - Enhanced Makefile with `install-local-minimal` target for Gradle compatibility
+  - Proper adapters parent POM structure for scalable framework support
+  - Streamlined dependency management and test execution
+- **🧪 Test Infrastructure**: All tests now pass on Java 24 with updated mocking framework
+
 2.8.0 uses xmlsec 2.2.3 which fixes [CVE-2021-40690](https://snyk.io/vuln/SNYK-JAVA-ORGAPACHESANTUARIO-1655558)
 
 Version >= 2.9.1 requires Java 11+ due to Jakarta EE migration (Java 17+ recommended for production). Previous versions (>= 2.5.0) were compatible with Java 8/9.
@@ -19,6 +38,9 @@ We [introduced some incompatibilities](https://github.com/onelogin/java-saml/iss
 Version 1.1.2 is considered to be deprecated. If you have used it, we strongly recommend that you migrate to the new version.
 We rebuilt the toolkit on 2.0.0, so code/settings that you had been using in the previous version will no longer be compatible.
 
+- [⚠️ Important Notice](#️-important-notice)
+- [Recent Changes (2025)](#recent-changes-2025)
+  - [Version 2.10.0-UNBLOCKED-SNAPSHOT](#version-2100-unblocked-snapshot)
 - [Why add SAML support to my software?](#why-add-saml-support-to-my-software)
 - [General description](#general-description)
 - [Security warning](#security-warning)
@@ -27,6 +49,7 @@ We rebuilt the toolkit on 2.0.0, so code/settings that you had been using in the
     - [Github](#github)
     - [Maven](#maven)
   - [Dependencies](#dependencies)
+  - [Build System](#build-system)
 - [Working with the github repository code and Eclipse.](#working-with-the-github-repository-code-and-eclipse)
   - [Get the toolkit.](#get-the-toolkit)
   - [Adding java-saml toolkit components as a project](#adding-java-saml-toolkit-components-as-a-project)
@@ -36,6 +59,7 @@ We rebuilt the toolkit on 2.0.0, so code/settings that you had been using in the
   - [Learning the toolkit](#learning-the-toolkit)
     - [core (com.onelogin:java-saml-core)](#core-comoneloginjava-saml-core)
     - [toolkit (com.onelogin:java-saml)](#toolkit-comoneloginjava-saml)
+    - [adapters (com.onelogin:java-saml-adapters)](#adapters-comoneloginjava-saml-adapters)
     - [samples (com.onelogin:java-saml-tookit-samples)](#samples-comoneloginjava-saml-tookit-samples)
   - [How it works](#how-it-works)
     - [Javadocs](#javadocs)
@@ -134,7 +158,16 @@ Install it as a maven dependency:
   <dependency>
       <groupId>com.onelogin</groupId>
       <artifactId>java-saml</artifactId>
-      <version>2.9.0</version>
+      <version>2.10.0-UNBLOCKED-SNAPSHOT</version>
+  </dependency>
+```
+
+For the new Jetty 12 adapter:
+```xml
+  <dependency>
+      <groupId>com.onelogin</groupId>
+      <artifactId>java-saml-jetty</artifactId>
+      <version>2.10.0-UNBLOCKED-SNAPSHOT</version>
   </dependency>
 ```
 
@@ -172,6 +205,15 @@ also the [Java Cryptography Extension (JCE)](https://en.wikipedia.org/wiki/Java_
 For more info, open and read the different pom.xml files:
 [core/pom.xml](https://github.com/onelogin/java-saml/blob/v2.5.0/core/pom.xml), [toolkit/pom.xml](https://github.com/onelogin/java-saml/blob/v2.5.0/toolkit/pom.xml)
 
+### Build System
+The project includes an enhanced Makefile with targets for different build scenarios:
+- `make install-local-minimal` - Creates a Gradle-compatible Maven repository with only project artifacts
+- `make build` - Full build with tests
+- `make build-fast` - Fast build without tests
+- `make test` - Run all tests (now supports Java 24)
+
+The build system properly handles the new adapters module and provides streamlined dependency management.
+
 ## Working with the github repository code and Eclipse.
 ### Get the toolkit.
 The toolkit is hosted on github. You can download it from:
@@ -207,6 +249,25 @@ In the repo, at *src/main/java* you will find the source; at *src/main/resources
 #### toolkit (com.onelogin:java-saml) ####
 This folder contains a maven project with the Auth class to handle the low level classes of java-saml-core and the ServletUtils class to handle jakarta.servlet.http objects, used on the Auth class.
 In the repo, at *src/main/java* you will find the source and at *src/test/java* the junit tests for the classes Auth and ServletUtils.
+
+#### adapters (com.onelogin:java-saml-adapters) ####
+This folder contains framework-specific adapters that provide seamless integration with popular Java web frameworks:
+
+**Jetty Adapter (com.onelogin:java-saml-jetty)**
+- Full support for Eclipse Jetty 12 with Jakarta EE 10+
+- HTTP abstraction layer for framework-agnostic SAML integration
+- Factory pattern for creating HTTP contexts from Jetty Request/Response objects
+- Compatible with modern web frameworks and supports Tor network integration
+- Provides `JettyHttpContextFactory` for easy integration
+
+Usage example:
+```java
+import com.onelogin.saml2.jetty.JettyHttpContextFactory;
+import com.onelogin.saml2.http.HttpContext;
+
+JettyHttpContextFactory factory = new JettyHttpContextFactory();
+HttpContext context = factory.create(jettyRequest, jettyResponse);
+```
 
 #### samples (com.onelogin:java-saml-tookit-samples) ####
 This folder contains a maven project with a jsp app used to learn how the java-saml toolkit works.
