@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    
+    <parent>
+        <groupId>com.onelogin</groupId>
+        <artifactId>java-saml-toolkit</artifactId>
+        <version>2.10.0-UNBLOCKED-SNAPSHOT</version>
+    </parent>
+    
+    <artifactId>java-saml-adapters</artifactId>
+    <packaging>pom</packaging>
+    
+    <name>java-saml Framework Adapters</name>
+    <description>Framework-specific adapters for java-saml</description>
+    
+    <modules>
+        <module>java-saml-jetty</module>
+    </modules>
+    
+    <dependencies>
+        <!-- Common dependency on core module for all adapters -->
+        <dependency>
+            <groupId>com.onelogin</groupId>
+            <artifactId>java-saml-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+</project>

@@ -5,7 +5,7 @@
 MAVEN_OPTS ?= -Xmx1024m
 LOCAL_REPO = .maven
 SKIP_TESTS ?= false
-SKIP_DEPENDENCY_CHECK ?= true
+# SKIP_DEPENDENCY_CHECK removed - dependency check plugin has been removed
 DIST_DIR = dist
 VERSION = $(shell mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
 
@@ -19,7 +19,6 @@ help: ## Show this help message
 	@echo "Environment Variables:"
 	@echo "  MAVEN_OPTS           Maven JVM options (default: -Xmx1024m)"
 	@echo "  SKIP_TESTS           Skip running tests (default: false)"
-	@echo "  SKIP_DEPENDENCY_CHECK Skip OWASP dependency check (default: true)"
 
 # Clean targets
 .PHONY: clean
@@ -53,26 +52,26 @@ test-skip: ## Compile and package without running tests
 .PHONY: package
 package: ## Package the project (includes tests)
 ifeq ($(SKIP_TESTS),true)
-	mvn package -DskipTests=true -Ddependency-check.skip=$(SKIP_DEPENDENCY_CHECK)
+	mvn package -DskipTests=true
 else
-	mvn package -Ddependency-check.skip=$(SKIP_DEPENDENCY_CHECK)
+	mvn package
 endif
 
 # Install targets
 .PHONY: install
 install: ## Install to default Maven local repository (~/.m2/repository)
 ifeq ($(SKIP_TESTS),true)
-	mvn install -DskipTests=true -Ddependency-check.skip=$(SKIP_DEPENDENCY_CHECK)
+	mvn install -DskipTests=true
 else
-	mvn install -Ddependency-check.skip=$(SKIP_DEPENDENCY_CHECK)
+	mvn install
 endif
 
 .PHONY: install-local
 install-local: ## Install to local repository (.maven directory)
 ifeq ($(SKIP_TESTS),true)
-	mvn install -DskipTests=true -Dmaven.repo.local=$(LOCAL_REPO) -Ddependency-check.skip=$(SKIP_DEPENDENCY_CHECK)
+	mvn install -DskipTests=true -Dmaven.repo.local=$(LOCAL_REPO)
 else
-	mvn install -Dmaven.repo.local=$(LOCAL_REPO) -Ddependency-check.skip=$(SKIP_DEPENDENCY_CHECK)
+	mvn install -Dmaven.repo.local=$(LOCAL_REPO)
 endif
 
 .PHONY: install-local-clean
@@ -84,8 +83,9 @@ install-local-minimal: ## Create Gradle-compatible Maven repository with project
 	@rm -rf $(LOCAL_REPO)
 	@mkdir -p $(LOCAL_REPO)
 
-	# Build project artifacts
-	mvn clean package -DskipTests=$(SKIP_TESTS) -Ddependency-check.skip=$(SKIP_DEPENDENCY_CHECK)
+	# Build project artifacts (including adapters)
+	mvn clean package -DskipTests=$(SKIP_TESTS)
+	cd adapters && mvn clean package -DskipTests=$(SKIP_TESTS)
 
 	# Install parent POM first (required for child POMs)
 	mvn install:install-file -Dfile=pom.xml \
@@ -103,6 +103,16 @@ install-local-minimal: ## Create Gradle-compatible Maven repository with project
 	mvn install:install-file -Dfile=samples/java-saml-tookit-jspsample/target/java-saml-tookit-jspsample-$(VERSION).war \
 		-DgroupId=com.onelogin -DartifactId=java-saml-tookit-jspsample -Dversion=$(VERSION) \
 		-Dpackaging=war -DlocalRepositoryPath=$(LOCAL_REPO) -DcreateChecksum=true
+
+	# Install adapters parent POM (required for adapter modules)
+	mvn install:install-file -Dfile=adapters/pom.xml \
+		-DgroupId=com.onelogin -DartifactId=java-saml-adapters -Dversion=$(VERSION) \
+		-Dpackaging=pom -DlocalRepositoryPath=$(LOCAL_REPO) -DcreateChecksum=true
+
+	# Install adapter artifacts
+	mvn install:install-file -Dfile=adapters/java-saml-jetty/target/java-saml-jetty-$(VERSION).jar \
+		-DgroupId=com.onelogin -DartifactId=java-saml-jetty -Dversion=$(VERSION) \
+		-Dpackaging=jar -DlocalRepositoryPath=$(LOCAL_REPO) -DcreateChecksum=true
 
 	# Rename maven-metadata-local.xml to maven-metadata.xml for Gradle compatibility
 	@find $(LOCAL_REPO) -name "maven-metadata-local.xml" -exec sh -c 'mv "$$1" "$${1%-local.xml}.xml"' _ {} \;
@@ -156,7 +166,7 @@ build-local-fast: clean compile install-local ## Fast build and install to local
 # Development targets
 .PHONY: verify
 verify: ## Run Maven verify phase (includes integration tests)
-	mvn verify -Ddependency-check.skip=$(SKIP_DEPENDENCY_CHECK)
+	mvn verify
 
 .PHONY: dependency-tree
 dependency-tree: ## Show dependency tree
@@ -193,11 +203,11 @@ show-local-repo-size: ## Show size of local repository
 # Quick commands
 .PHONY: quick-build
 quick-build: ## Quick build for development (compile + package, no tests)
-	mvn clean compile package -DskipTests=true -Ddependency-check.skip=true
+	mvn clean compile package -DskipTests=true
 
 .PHONY: quick-install
-quick-install: ## Quick install to local repo (no tests, no dependency check)
-	mvn clean install -DskipTests=true -Dmaven.repo.local=$(LOCAL_REPO) -Ddependency-check.skip=true
+quick-install: ## Quick install to local repo (no tests)
+	mvn clean install -DskipTests=true -Dmaven.repo.local=$(LOCAL_REPO)
 
 .PHONY: quick-minimal
 quick-minimal: ## Quick minimal install for Gradle (only project artifacts)

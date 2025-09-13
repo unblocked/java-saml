@@ -9,6 +9,7 @@ import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThat;
@@ -56,6 +57,8 @@ import com.onelogin.saml2.exception.SettingsException;
 import com.onelogin.saml2.exception.ValidationError;
 import com.onelogin.saml2.exception.XMLEntityException;
 import com.onelogin.saml2.factory.SamlMessageFactory;
+import com.onelogin.saml2.http.HttpContext;
+import com.onelogin.saml2.http.HttpContextFactory;
 import com.onelogin.saml2.http.HttpRequest;
 import com.onelogin.saml2.logout.LogoutRequest;
 import com.onelogin.saml2.logout.LogoutRequestParams;
@@ -63,6 +66,7 @@ import com.onelogin.saml2.logout.LogoutResponse;
 import com.onelogin.saml2.logout.LogoutResponseParams;
 import com.onelogin.saml2.model.KeyStoreSettings;
 import com.onelogin.saml2.model.SamlResponseStatus;
+import com.onelogin.saml2.servlet.ServletHttpContextFactory;
 import com.onelogin.saml2.servlet.ServletUtils;
 import com.onelogin.saml2.settings.Saml2Settings;
 import com.onelogin.saml2.settings.SettingsBuilder;
@@ -2466,5 +2470,70 @@ public class AuthTest {
 			}
 		});
 		auth.processSLO();
+	}
+
+	/**
+	 * Tests Auth constructor with HttpContext directly.
+	 * This validates that Auth can work with framework-agnostic HttpContext instead of direct servlet objects.
+	 */
+	@Test
+	public void testAuthWithHttpContext() throws IOException, SettingsException, Error {
+		// Create mock servlet objects
+		HttpServletRequest request = mock(HttpServletRequest.class);
+		HttpServletResponse response = mock(HttpServletResponse.class);
+
+		// Create HttpContext using servlet objects through factory
+		ServletHttpContextFactory factory = new ServletHttpContextFactory();
+		HttpContext httpContext = factory.createContext(request, response);
+
+		// Load settings
+		Saml2Settings settings = new SettingsBuilder().fromFile("config.min.properties").build();
+
+		// Create Auth with HttpContext
+		Auth auth = new Auth(settings, httpContext);
+
+		// Verify Auth was created successfully
+		assertNotNull(auth);
+		assertNotNull(auth.getSettings());
+		assertEquals(settings.getIdpEntityId(), auth.getSettings().getIdpEntityId());
+		assertEquals(settings.getSpEntityId(), auth.getSettings().getSpEntityId());
+	}
+
+	/**
+	 * Tests Auth constructor with HttpContextFactory and separate request/response objects.
+	 * This validates that Auth can work with HttpContextFactory pattern instead of direct servlet objects.
+	 */
+	@Test
+	public void testAuthWithHttpContextFactory() throws IOException, SettingsException, Error {
+		// Create mock servlet objects
+		HttpServletRequest request = mock(HttpServletRequest.class);
+		HttpServletResponse response = mock(HttpServletResponse.class);
+
+		// Create HttpContextFactory
+		HttpContextFactory factory = new ServletHttpContextFactory();
+
+		// Load settings
+		Saml2Settings settings = new SettingsBuilder().fromFile("config.min.properties").build();
+
+		// Create Auth with HttpContextFactory
+		Auth auth = new Auth(settings, factory, request, response);
+
+		// Verify Auth was created successfully
+		assertNotNull(auth);
+		assertNotNull(auth.getSettings());
+		assertEquals(settings.getIdpEntityId(), auth.getSettings().getIdpEntityId());
+		assertEquals(settings.getSpEntityId(), auth.getSettings().getSpEntityId());
+	}
+
+	/**
+	 * Tests that HttpContextFactory properly validates servlet objects.
+	 * This ensures the factory rejects non-servlet objects.
+	 */
+	@Test(expected = IllegalArgumentException.class)
+	public void testHttpContextFactoryValidation() {
+		HttpContextFactory factory = new ServletHttpContextFactory();
+
+		// Try to create context with invalid objects
+		factory.createContext("not a request", "not a response");
 	}
 }

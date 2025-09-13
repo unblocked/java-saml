@@ -28,6 +28,10 @@ import com.onelogin.saml2.exception.SettingsException;
 import com.onelogin.saml2.factory.SamlMessageFactory;
 import com.onelogin.saml2.exception.Error;
 import com.onelogin.saml2.http.HttpRequest;
+import com.onelogin.saml2.http.HttpContext;
+import com.onelogin.saml2.http.HttpContextFactory;
+import com.onelogin.saml2.http.HttpRequestContext;
+import com.onelogin.saml2.http.HttpResponseContext;
 import com.onelogin.saml2.logout.LogoutRequest;
 import com.onelogin.saml2.logout.LogoutRequestParams;
 import com.onelogin.saml2.logout.LogoutResponse;
@@ -70,6 +74,11 @@ public class Auth {
 	 * HttpServletResponse object to be used (For example to execute the redirections).
 	 */
 	private HttpServletResponse response;
+
+	/**
+	 * Framework-agnostic HTTP context (request and response).
+	 */
+	private HttpContext httpContext;
 
 	/**
 	 * NameID.
@@ -181,7 +190,7 @@ public class Auth {
 	 * @throws Error
 	 */
 	public Auth() throws IOException, SettingsException, Error {
-		this(new SettingsBuilder().fromFile("onelogin.saml.properties").build(), null, null);
+		this(new SettingsBuilder().fromFile("onelogin.saml.properties").build(), (HttpServletRequest) null, (HttpServletResponse) null);
 	}
 
 	/**
@@ -222,7 +231,7 @@ public class Auth {
 	 */
 	public Auth(String filename, KeyStoreSettings keyStoreSetting)
 			throws IOException, SettingsException, Error {
-		this(new SettingsBuilder().fromFile(filename, keyStoreSetting).build(), null, null);
+		this(new SettingsBuilder().fromFile(filename, keyStoreSetting).build(), (HttpServletRequest) null, (HttpServletResponse) null);
 	}
 
 	/**
@@ -316,6 +325,61 @@ public class Auth {
 	}
 
 	/**
+	 * Initializes the SP SAML instance with framework-agnostic HTTP context.
+	 *
+	 * @param settings Saml2Settings object. Setting data
+	 * @param httpContext Framework-agnostic HTTP context containing request and response
+	 *
+	 * @throws SettingsException
+	 * @since 2.11.0
+	 */
+	public Auth(Saml2Settings settings, HttpContext httpContext) throws SettingsException {
+		this.settings = settings;
+		this.httpContext = httpContext;
+
+		// Check settings
+		List<String> settingsErrors = settings.checkSettings();
+		if (!settingsErrors.isEmpty()) {
+			String errorMsg = "Invalid settings: ";
+			errorMsg += StringUtils.join(settingsErrors, ", ");
+			LOGGER.error(errorMsg);
+			throw new SettingsException(errorMsg, SettingsException.SETTINGS_INVALID);
+		}
+		LOGGER.debug("Settings validated");
+	}
+
+	/**
+	 * Initializes the SP SAML instance using a factory to create HTTP context from framework-specific objects.
+	 *
+	 * @param settings Saml2Settings object. Setting data
+	 * @param factory Factory to create HttpContext from framework-specific objects
+	 * @param request Framework-specific request object
+	 * @param response Framework-specific response object (may be null for some frameworks)
+	 *
+	 * @throws SettingsException
+	 * @since 2.11.0
+	 */
+	public Auth(Saml2Settings settings, HttpContextFactory factory, Object request, Object response)
+			throws SettingsException {
+		this(settings, factory.createContext(request, response));
+	}
+
+	/**
+	 * Initializes the SP SAML instance using a factory with a single framework object (e.g., Ktor's ApplicationCall).
+	 *
+	 * @param settings Saml2Settings object. Setting data
+	 * @param factory Factory to create HttpContext from framework-specific objects
+	 * @param requestResponse Framework-specific object containing both request and response functionality
+	 *
+	 * @throws SettingsException
+	 * @since 2.11.0
+	 */
+	public Auth(Saml2Settings settings, HttpContextFactory factory, Object requestResponse)
+			throws SettingsException {
+		this(settings, factory.createContext(requestResponse));
+	}
+
+	/**
 	 * Set the strict mode active/disable
 	 *
 	 * @param value Strict value
@@ -323,6 +387,84 @@ public class Auth {
 	public void setStrict(Boolean value) {
 		settings.setStrict(value);
 	}
+
+	/**
+	 * Gets the HttpRequest object, creating it from either servlet request or HTTP context.
+	 *
+	 * @return HttpRequest object for processing SAML data
+	 */
+	private HttpRequest getHttpRequest() {
+		if (request != null) {
+			// Use servlet-based approach for backward compatibility
+			return ServletUtils.makeHttpRequest(request);
+		} else if (httpContext != null) {
+			// Use framework-agnostic approach
+			return createHttpRequestFromContext(httpContext.getRequest());
+		} else {
+			throw new IllegalStateException("Neither servlet request nor HTTP context is available");
+		}
+	}
+
+	/**
+	 * Creates an HttpRequest from the framework-agnostic HttpRequestContext.
+	 *
+	 * @param requestContext the framework-agnostic request context
+	 * @return HttpRequest object
+	 */
+	private HttpRequest createHttpRequestFromContext(HttpRequestContext requestContext) {
+		return new HttpRequest(
+			requestContext.getRequestURL(),
+			requestContext.getAllParameters(),
+			requestContext.getQueryString()
+		);
+	}
+
+	/**
+	 * Sends a redirect response using either servlet response or HTTP context.
+	 *
+	 * @param location the redirect URL
+	 * @throws IOException if an I/O error occurs
+	 */
+	private void sendRedirect(String location) throws IOException {
+		if (response != null) {
+			// Use servlet-based approach for backward compatibility
+			response.sendRedirect(location);
+		} else if (httpContext != null) {
+			// Use framework-agnostic approach
+			httpContext.getResponse().sendRedirect(location);
+		} else {
+			throw new IllegalStateException("Neither servlet response nor HTTP context is available");
+		}
+	}
+
+	/**
+	 * Sends a redirect with parameters using either servlet response or HTTP context.
+	 *
+	 * @param url the base URL
+	 * @param parameters the parameters to append
+	 * @param stay whether to return the URL instead of redirecting
+	 * @return the redirect URL if stay is true, null otherwise
+	 * @throws IOException if an I/O error occurs
+	 */
+	private String sendRedirectWithParameters(String url, Map<String, String> parameters, Boolean stay) throws IOException {
+		if (response != null) {
+			// Use servlet-based approach for backward compatibility
+			return ServletUtils.sendRedirect(response, url, parameters, stay);
+		} else if (httpContext != null) {
+			// Use framework-agnostic approach
+			String redirectUrl = ServletUtils.buildRedirectUrl(url, parameters);
+			if (!stay) {
+				httpContext.getResponse().sendRedirect(redirectUrl);
+				return null;
+			} else {
+				return redirectUrl;
+			}
+		} else {
+			throw new IllegalStateException("Neither servlet response nor HTTP context is available");
+		}
+	}
+
+
 
 	/**
 	 * Initiates the SSO process.
@@ -648,7 +790,7 @@ public class Auth {
 		if (!stay) {
 			LOGGER.debug("AuthNRequest sent to " + ssoUrl + " --> " + samlRequest);
 		}
-		return ServletUtils.sendRedirect(response, ssoUrl, parameters, stay);
+		return sendRedirectWithParameters(ssoUrl, parameters, stay);
 	}
 
 	/**
@@ -818,7 +960,7 @@ public class Auth {
 		if (!stay) {
 			LOGGER.debug("Logout request sent to " + sloUrl + " --> " + samlLogoutRequest);
 		}
-		return ServletUtils.sendRedirect(response, sloUrl, parameters, stay);
+		return sendRedirectWithParameters(sloUrl, parameters, stay);
 	}
 
 	/**
@@ -1197,7 +1339,7 @@ public class Auth {
 	 */
 	public void processResponse(String requestId) throws Exception {
 		authenticated = false;
-		final HttpRequest httpRequest = ServletUtils.makeHttpRequest(this.request);
+		final HttpRequest httpRequest = getHttpRequest();
 		final String samlResponseParameter = httpRequest.getParameter("SAMLResponse");
 
 		if (samlResponseParameter != null) {
@@ -1268,7 +1410,7 @@ public class Auth {
 	 * @throws Exception
 	 */
 	public String processSLO(Boolean keepLocalSession, String requestId, Boolean stay) throws Exception {
-		final HttpRequest httpRequest = ServletUtils.makeHttpRequest(this.request);
+		final HttpRequest httpRequest = getHttpRequest();
 
 		final String samlRequestParameter = httpRequest.getParameter("SAMLRequest");
 		final String samlResponseParameter = httpRequest.getParameter("SAMLResponse");
@@ -1350,7 +1492,7 @@ public class Auth {
 				if (!stay) {
 					LOGGER.debug("Logout response sent to " + sloUrl + " --> " + samlLogoutResponse);
 				}
-				return ServletUtils.sendRedirect(response, sloUrl, parameters, stay);
+				return sendRedirectWithParameters(sloUrl, parameters, stay);
 			}
 		} else {
 			errors.add("invalid_binding");

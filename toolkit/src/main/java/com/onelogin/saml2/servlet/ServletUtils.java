@@ -214,4 +214,34 @@ public class ServletUtils {
         Map<String, String> parameters  =new HashMap<String, String>();
         sendRedirect(response, location, parameters);
     }
+
+    /**
+     * Builds a URL with parameters appended as query string.
+     * This is a utility method that can be used by framework-agnostic code.
+     *
+     * @param location the base URL
+     * @param parameters the parameters to append
+     * @return the complete URL with parameters
+     * @since 2.11.0
+     */
+    public static String buildRedirectUrl(String location, Map<String, String> parameters) {
+        String target = location;
+
+        if (!parameters.isEmpty()) {
+            boolean first = !location.contains("?");
+            for (Map.Entry<String, String> parameter : parameters.entrySet()) {
+                if (first) {
+                    target += "?";
+                    first = false;
+                } else {
+                    target += "&";
+                }
+                target += parameter.getKey();
+                if (!parameter.getValue().isEmpty()) {
+                    target += "=" + Util.urlEncoder(parameter.getValue());
+                }
+            }
+        }
+        return target;
+    }
 }

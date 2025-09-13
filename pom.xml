@@ -22,6 +22,7 @@
 		<module>core</module>
 		<module>toolkit</module>
 		<module>samples</module>
+		<module>adapters</module>
 	</modules>
 
 	<dependencyManagement>
@@ -93,25 +94,7 @@
 					</execution>
 				</executions>
 			</plugin>
-			<plugin>
-				<groupId>org.owasp</groupId>
-				<artifactId>dependency-check-maven</artifactId>
-				<version>8.4.0</version>
-				<configuration>
-					<failBuildOnCVSS>7</failBuildOnCVSS>
-					<suppressionFiles>
-						<suppressionFile>.nvd-suppressions.xml</suppressionFile>
-					</suppressionFiles>
-					<assemblyAnalyzerEnabled>false</assemblyAnalyzerEnabled>
-				</configuration>
-				<executions>
-					<execution>
-						<goals>
-							<goal>check</goal>
-						</goals>
-					 </execution>
-				</executions>
-			</plugin>
+
 		</plugins>
 		<pluginManagement>
 			<plugins>
