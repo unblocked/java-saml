@@ -14,7 +14,7 @@ import org.eclipse.jetty.util.Fields;
 import com.onelogin.saml2.http.HttpRequestContext;
 
 /**
- * Implementation of HttpRequestContext that wraps a Jetty 12 Request.
+ * Implementation of HttpRequestContext that wraps a Jetty 12.1 Request.
  * This provides framework-agnostic access to Jetty request data.
  * 
  * @since 2.11.0

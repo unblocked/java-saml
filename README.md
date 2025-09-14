@@ -13,7 +13,7 @@ Add SAML support to your Java applications using this library.
 ### Version 2.10.0-UNBLOCKED-SNAPSHOT
 - **🚀 Jakarta EE Migration**: Fully migrated from Java EE to Jakarta EE 10+ for modern compatibility
 - **☕ Java 24 Support**: Updated test dependencies (Mockito 5.14.2) for full Java 24 compatibility
-- **🌐 Jetty 12 Adapter**: New framework adapter for Eclipse Jetty 12 with Jakarta EE support
+- **🌐 Jetty 12.1 Adapter**: New framework adapter for Eclipse Jetty 12.1 with Jakarta EE support
   - HTTP abstraction layer for framework-agnostic SAML integration
   - Compatible with modern web frameworks and Tor network support
   - Factory pattern for creating HTTP contexts from various request/response objects
@@ -162,7 +162,7 @@ Install it as a maven dependency:
   </dependency>
 ```
 
-For the new Jetty 12 adapter:
+For the new Jetty 12.1 adapter:
 ```xml
   <dependency>
       <groupId>com.onelogin</groupId>
@@ -254,7 +254,7 @@ In the repo, at *src/main/java* you will find the source and at *src/test/java* 
 This folder contains framework-specific adapters that provide seamless integration with popular Java web frameworks:
 
 **Jetty Adapter (com.onelogin:java-saml-jetty)**
-- Full support for Eclipse Jetty 12 with Jakarta EE 10+
+- Full support for Eclipse Jetty 12.1 with Jakarta EE 10+
 - HTTP abstraction layer for framework-agnostic SAML integration
 - Factory pattern for creating HTTP contexts from Jetty Request/Response objects
 - Compatible with modern web frameworks and supports Tor network integration

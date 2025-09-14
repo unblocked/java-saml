@@ -100,10 +100,6 @@ install-local-minimal: ## Create Gradle-compatible Maven repository with project
 		-DgroupId=com.onelogin -DartifactId=java-saml -Dversion=$(VERSION) \
 		-Dpackaging=jar -DlocalRepositoryPath=$(LOCAL_REPO) -DcreateChecksum=true
 
-	mvn install:install-file -Dfile=samples/java-saml-tookit-jspsample/target/java-saml-tookit-jspsample-$(VERSION).war \
-		-DgroupId=com.onelogin -DartifactId=java-saml-tookit-jspsample -Dversion=$(VERSION) \
-		-Dpackaging=war -DlocalRepositoryPath=$(LOCAL_REPO) -DcreateChecksum=true
-
 	# Install adapters parent POM (required for adapter modules)
 	mvn install:install-file -Dfile=adapters/pom.xml \
 		-DgroupId=com.onelogin -DartifactId=java-saml-adapters -Dversion=$(VERSION) \
@@ -147,6 +143,32 @@ generate-maven-metadata: ## Generate Maven metadata files for local repository
 	@echo '    <lastUpdated>'$$(date +%Y%m%d%H%M%S)'</lastUpdated>' >> $(LOCAL_REPO)/com/onelogin/java-saml/maven-metadata-local.xml
 	@echo '  </versioning>' >> $(LOCAL_REPO)/com/onelogin/java-saml/maven-metadata-local.xml
 	@echo '</metadata>' >> $(LOCAL_REPO)/com/onelogin/java-saml/maven-metadata-local.xml
+
+	# Jetty Adapter metadata
+	@mkdir -p $(LOCAL_REPO)/com/onelogin/java-saml-jetty
+	@echo '<?xml version="1.0" encoding="UTF-8"?>' > $(LOCAL_REPO)/com/onelogin/java-saml-jetty/maven-metadata-local.xml
+	@echo '<metadata>' >> $(LOCAL_REPO)/com/onelogin/java-saml-jetty/maven-metadata-local.xml
+	@echo '  <groupId>com.onelogin</groupId>' >> $(LOCAL_REPO)/com/onelogin/java-saml-jetty/maven-metadata-local.xml
+	@echo '  <artifactId>java-saml-jetty</artifactId>' >> $(LOCAL_REPO)/com/onelogin/java-saml-jetty/maven-metadata-local.xml
+	@echo '  <versioning>' >> $(LOCAL_REPO)/com/onelogin/java-saml-jetty/maven-metadata-local.xml
+	@echo '    <release>$(VERSION)</release>' >> $(LOCAL_REPO)/com/onelogin/java-saml-jetty/maven-metadata-local.xml
+	@echo '    <versions><version>$(VERSION)</version></versions>' >> $(LOCAL_REPO)/com/onelogin/java-saml-jetty/maven-metadata-local.xml
+	@echo '    <lastUpdated>'$$(date +%Y%m%d%H%M%S)'</lastUpdated>' >> $(LOCAL_REPO)/com/onelogin/java-saml-jetty/maven-metadata-local.xml
+	@echo '  </versioning>' >> $(LOCAL_REPO)/com/onelogin/java-saml-jetty/maven-metadata-local.xml
+	@echo '</metadata>' >> $(LOCAL_REPO)/com/onelogin/java-saml-jetty/maven-metadata-local.xml
+
+	# Adapters parent POM metadata
+	@mkdir -p $(LOCAL_REPO)/com/onelogin/java-saml-adapters
+	@echo '<?xml version="1.0" encoding="UTF-8"?>' > $(LOCAL_REPO)/com/onelogin/java-saml-adapters/maven-metadata-local.xml
+	@echo '<metadata>' >> $(LOCAL_REPO)/com/onelogin/java-saml-adapters/maven-metadata-local.xml
+	@echo '  <groupId>com.onelogin</groupId>' >> $(LOCAL_REPO)/com/onelogin/java-saml-adapters/maven-metadata-local.xml
+	@echo '  <artifactId>java-saml-adapters</artifactId>' >> $(LOCAL_REPO)/com/onelogin/java-saml-adapters/maven-metadata-local.xml
+	@echo '  <versioning>' >> $(LOCAL_REPO)/com/onelogin/java-saml-adapters/maven-metadata-local.xml
+	@echo '    <release>$(VERSION)</release>' >> $(LOCAL_REPO)/com/onelogin/java-saml-adapters/maven-metadata-local.xml
+	@echo '    <versions><version>$(VERSION)</version></versions>' >> $(LOCAL_REPO)/com/onelogin/java-saml-adapters/maven-metadata-local.xml
+	@echo '    <lastUpdated>'$$(date +%Y%m%d%H%M%S)'</lastUpdated>' >> $(LOCAL_REPO)/com/onelogin/java-saml-adapters/maven-metadata-local.xml
+	@echo '  </versioning>' >> $(LOCAL_REPO)/com/onelogin/java-saml-adapters/maven-metadata-local.xml
+	@echo '</metadata>' >> $(LOCAL_REPO)/com/onelogin/java-saml-adapters/maven-metadata-local.xml
 
 # Full build targets
 .PHONY: build

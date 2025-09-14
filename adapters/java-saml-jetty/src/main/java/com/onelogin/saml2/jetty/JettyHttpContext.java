@@ -8,7 +8,7 @@ import com.onelogin.saml2.http.HttpRequestContext;
 import com.onelogin.saml2.http.HttpResponseContext;
 
 /**
- * Implementation of HttpContext that wraps Jetty 12 Request and Response objects.
+ * Implementation of HttpContext that wraps Jetty 12.1 Request and Response objects.
  * This provides framework-agnostic access to Jetty's HTTP functionality.
  * 
  * @since 2.11.0

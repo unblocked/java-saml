@@ -7,8 +7,8 @@ import com.onelogin.saml2.http.HttpContext;
 import com.onelogin.saml2.http.HttpContextFactory;
 
 /**
- * Factory for creating HttpContext instances from Jetty 12 Request and Response objects.
- * This factory supports both the standard Jetty 12 API (Request/Response) and the
+ * Factory for creating HttpContext instances from Jetty 12.1 Request and Response objects.
+ * This factory supports both the standard Jetty 12.1 API (Request/Response) and the
  * internal Channel API (ChannelRequest/ChannelResponse) for maximum compatibility.
  *
  * @since 2.11.0

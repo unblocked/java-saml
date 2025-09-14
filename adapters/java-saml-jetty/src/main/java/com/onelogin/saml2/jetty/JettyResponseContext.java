@@ -17,7 +17,7 @@ import org.eclipse.jetty.util.Callback;
 import com.onelogin.saml2.http.HttpResponseContext;
 
 /**
- * Implementation of HttpResponseContext that wraps a Jetty 12 Response.
+ * Implementation of HttpResponseContext that wraps a Jetty 12.1 Response.
  * This provides framework-agnostic access to Jetty response functionality.
  * 
  * Note: This adapter converts Jetty's asynchronous callback-based API to synchronous
